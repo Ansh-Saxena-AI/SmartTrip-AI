@@ -104,14 +104,6 @@ These classifications are calculated by Python code. Their usefulness depends on
 * Live AI planning depends on valid API credentials, provider availability, and usage quotas.
 * A successful local unit test does not prove that every external integration works end to end.
 
-## Original Project and Attribution
-
-This project is based on the open-source **TravelBrain - Multi-Agent AI Travel Planner** repository:
-
-https://github.com/KalyanM45/TravelBrain-Multi-Agent-AI-Travel-Planner
-
-The original project's authors and license must receive appropriate attribution. This customized project retains the original GPL-3.0 licensing; see the `LICENSE` file for the applicable terms.
-
 ## Future Improvements
 
 * More reliable structured extraction of travel costs
