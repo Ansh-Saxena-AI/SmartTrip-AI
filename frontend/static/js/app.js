@@ -504,8 +504,10 @@
     var copy = {
       server: {
         title: "The planner could not finish",
-        detail: "The request reached the server but the agent run failed. Check the uvicorn console for the full traceback."
-      },
+        detail: "The request reached the server but the agent run failed. Check the server console for details." },
+      quota: {
+        title: "AI usage limit reached",
+        detail: "The AI provider has temporarily limited requests. Wait for the quota to reset, or configure another valid API key in Settings.   " },
       network: {
         title: "Could not reach the server",
         detail: "The request never completed. Check that the server is still running."
@@ -606,6 +608,67 @@
     };
   }
 
+  /* ---------------- demo mode ---------------- */
+
+  function loadDemoTrip() {
+    if (busy) {
+      toast("Wait for the current plan to finish.");
+      return;
+    }
+
+    var demo = {
+      answer: `# DEMO MODE — SAMPLE DATA
+
+> **Demonstration only:** This is a predefined sample itinerary. Prices, travel times, weather and availability are not live-verified.
+
+## Jaipur, Rajasthan — 3 days
+**Starting point:** Delhi
+**Travellers:** 2
+**Example budget:** ₹15,000 total
+
+## Day 1 — Arrival and the Old City
+- Travel from Delhi to Jaipur by train or bus. Check current schedules before departure.
+- Visit Hawa Mahal and explore the nearby markets.
+- Enjoy a traditional Rajasthani meal.
+
+## Day 2 — Forts and Local Culture
+- Visit Amber Fort.
+- Explore Jal Mahal from the lakeside viewpoint.
+- Spend the evening at a local market.
+
+## Day 3 — History and Return
+- Visit City Palace and Jantar Mantar.
+- Have lunch, then return to Delhi.
+
+## Illustrative budget (not live prices)
+
+| Expense | Example allocation |
+|---|---:|
+| Return transport for 2 | ₹3,000 |
+| Accommodation for 2 nights | ₹4,000 |
+| Food | ₹2,500 |
+| Local transport | ₹1,500 |
+| Attractions and activities | ₹1,500 |
+| Contingency | ₹2,500 |
+| **Total** | **₹15,000** |
+
+## Before you travel
+- Verify transport schedules and fares.
+- Confirm hotel prices and availability.
+- Check official attraction timings and current weather.
+- Adjust the allocations to match actual costs.`
+    };
+
+    renderUser("Show me a demo trip: Delhi to Jaipur for 2 people, 3 days, ₹15,000 budget.");
+    demo.__query = "Demo itinerary — sample data";
+    demo.thread_id = null;
+
+    renderResult(demo);
+    toast("Loaded sample demo trip — no AI API calls made.");
+    updateEmptyState();
+    scrollToEnd(true);
+  }
+
   /* ---------------- sending ---------------- */
 
   function setBusy(state) {
@@ -651,7 +714,11 @@
             if (!response.ok || data.success === false) {
               var err = new Error(data.error || ("Request failed with HTTP " + response.status));
               // 428 Precondition Required = a credential is missing.
-              if (response.status === 428) err.__kind = "setup";
+            if (response.status === 428) {
+              err.__kind = "setup";
+            } else if (response.status === 429 || data.kind === "quota") {
+              err.__kind = "quota";
+            }
               throw err;
             }
             return data;
@@ -704,6 +771,12 @@
   function autosize() {
     input.style.height = "auto";
     input.style.height = Math.min(input.scrollHeight, 200) + "px";
+  }
+
+  var demoTripBtn = $("demoTripBtn");
+
+  if (demoTripBtn) {
+    demoTripBtn.addEventListener("click", loadDemoTrip);
   }
 
   input.addEventListener("input", autosize);

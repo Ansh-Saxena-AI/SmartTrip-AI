@@ -15,6 +15,7 @@ def final_agent(state: TravelState):
         hotel_results=state["hotel_results"],
         weather_results=state["weather_results"],
         itinerary=state["itinerary"],
+        budget_analysis=state["budget_analysis"],
     )
 
     response = get_llm().invoke([

@@ -229,17 +229,41 @@ async def travel_planner(request: Request, request_data: TravelRequest):
             }
         )
 
+
     except Exception as e:
         print("ERROR:", e)
         traceback.print_exc()
+
+        error_message = str(e)
+        lower_error = error_message.lower()
+
+        if (
+            "rate limit" in lower_error
+            or "tokens per day" in lower_error
+            or "rate_limit_exceeded" in lower_error
+            or "429" in lower_error
+        ):
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "success": False,
+                    "kind": "quota",
+                    "error": (
+                        "The Groq API usage limit has been reached. "
+                        "Please wait for the limit to reset or configure "
+                        "another valid API key in Settings."
+                    )
+                }
+            )
 
         return JSONResponse(
             status_code=500,
             content={
                 "success": False,
-                "error": str(e)
+                "error": "The travel planner encountered an unexpected error."
             }
         )
+
 
 
 

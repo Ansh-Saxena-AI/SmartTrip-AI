@@ -12,8 +12,11 @@ class TravelState(TypedDict):
     flight_results: str
     hotel_results: str
     itinerary: str
-    llm_calls: int
     weather_results: str
+    budget_analysis: str
+    budget_costs: dict[str, float]
+    budget_target: float | None
+    llm_calls: int
 
 
 def initial_state(user_query: str) -> TravelState:
@@ -28,5 +31,8 @@ def initial_state(user_query: str) -> TravelState:
         "hotel_results": "",
         "weather_results": "",
         "itinerary": "",
+        "budget_analysis": "",
+        "budget_costs": {},
+        "budget_target": None,
         "llm_calls": 0,
     }
