@@ -31,21 +31,18 @@ PROJECT_DIR = SRC_DIR.parent
 # API keys
 # =========================
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 AVIATIONSTACK_API_KEY = os.getenv("AVIATIONSTACK_API_KEY")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-
 # =========================
 # LLM
 # =========================
 
-# Groq retired the Llama 3.x chat models; check the live list with
-#   GET https://api.groq.com/openai/v1/models
-# if this ever starts returning model_not_found again.
-GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
 
 # =========================
@@ -113,14 +110,13 @@ COOKIE_SECURE = os.getenv(
 ).lower() in ("true", "1", "yes")
 
 
-def get_groq_api_key() -> str:
-    if not GROQ_API_KEY:
+def get_gemini_api_key() -> str:
+    if not GEMINI_API_KEY:
         raise ValueError(
-            "GROQ_API_KEY is missing. Please add it to your .env file."
+            "GEMINI_API_KEY is missing. Please add it to your .env file."
         )
 
-    return GROQ_API_KEY
-
+    return GEMINI_API_KEY
 
 def normalize_database_url(database_url: str) -> str:
     """Default to sslmode=require, which managed Postgres providers expect."""

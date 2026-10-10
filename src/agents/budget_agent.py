@@ -94,6 +94,8 @@ If a cost cannot be reasonably estimated, state that it is unknown.
 
 
 def budget_agent(state: TravelState):
+    budget_target = extract_budget(state["user_query"])
+
     prompt = f"""
 User's request:
 {state["user_query"]}
@@ -110,27 +112,21 @@ Weather information:
 Itinerary:
 {state["itinerary"]}
 
-Prepare a practical budget estimate for the entire group.
+Prepare a practical budget estimate for the entire group in INR.
 
-Return the cost breakdown in INR. Clearly label estimated, sourced,
-and live-verified prices. Do not invent exact prices.
-
-Include these categories:
-- Round-trip transportation
-- Accommodation
-- Food
-- Local transportation
-- Activities and entry fees
-- Taxes and miscellaneous
-- Contingency
-
-State any missing costs and assumptions. Do not claim the trip is
-affordable if essential expenses are unknown.
-
-Provide cost-saving suggestions, but avoid claiming that savings
-are guaranteed.
+Rules:
+- Identify the number of travellers, trip duration, and accommodation nights.
+- Use available flight, hotel, and itinerary information.
+- Clearly distinguish verified prices from sourced estimates and unverified estimates.
+- Never invent live prices or booking availability.
+- Mark the estimate INCOMPLETE if essential costs are unknown.
+- Include transport, accommodation, food, local transport, activities,
+  taxes and miscellaneous expenses, and contingency.
+- Suggest practical cost reductions without guaranteeing savings.
+- Do not calculate or override the final total; the application calculates it.
+- Return only the budget breakdown, assumptions, estimate completeness,
+  and cost-saving suggestions.
 """
-    budget_target = extract_budget(state["user_query"])
 
     response = get_llm().invoke([
         SystemMessage(content=BUDGET_SYSTEM_PROMPT),
@@ -138,7 +134,26 @@ are guaranteed.
     ])
 
     
-    budget_text = response.content
+
+    content = response.content
+
+    if isinstance(content, str):
+        budget_text = content.strip()
+    elif isinstance(content, list):
+        budget_text = "".join(
+            item if isinstance(item, str)
+            else item.get("text", "")
+            if isinstance(item, dict)
+            and isinstance(item.get("text"), str)
+            else ""
+            for item in content
+        ).strip()
+    else:
+        budget_text = ""
+
+    if not budget_text:
+        raise ValueError("Gemini returned no usable budget analysis text.")
+
 
     budget_costs = extract_costs_from_text(budget_text)
 

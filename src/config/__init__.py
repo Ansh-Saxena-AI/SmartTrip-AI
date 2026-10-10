@@ -1,3 +1,4 @@
+
 from src.config.settings import (
     AIRLINE_DATA_CHAR_LIMIT,
     AIRPORT_DATA_CHAR_LIMIT,
@@ -10,15 +11,15 @@ from src.config.settings import (
     CACHE_TTL_FORECAST,
     CACHE_TTL_HOTELS,
     CACHE_TTL_WEATHER,
-    GROQ_API_KEY,
-    GROQ_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_MODEL,
     OPENWEATHER_API_KEY,
     PROJECT_DIR,
     REDIS_URL,
     SRC_DIR,
     TAVILY_API_KEY,
     get_database_url,
-    get_groq_api_key,
+    get_gemini_api_key,
 )
 
 __all__ = [
@@ -33,13 +34,13 @@ __all__ = [
     "CACHE_TTL_FORECAST",
     "CACHE_TTL_HOTELS",
     "CACHE_TTL_WEATHER",
-    "GROQ_API_KEY",
-    "GROQ_MODEL",
+    "GEMINI_API_KEY",
+    "GEMINI_MODEL",
     "OPENWEATHER_API_KEY",
     "PROJECT_DIR",
     "REDIS_URL",
     "SRC_DIR",
     "TAVILY_API_KEY",
     "get_database_url",
-    "get_groq_api_key",
+    "get_gemini_api_key",
 ]

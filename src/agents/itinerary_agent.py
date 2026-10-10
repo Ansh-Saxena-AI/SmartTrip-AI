@@ -26,6 +26,7 @@ def get_requested_days(user_query: str) -> int | None:
     return None
 
 
+
 def get_itinerary_days(itinerary: str) -> list[int]:
     """Find day numbers in itinerary headings."""
     matches = re.findall(
@@ -49,7 +50,25 @@ def itinerary_agent(state: TravelState):
         HumanMessage(content=prompt),
     ])
 
-    itinerary = response.content
+    content = response.content
+
+    if isinstance(content, str):
+        itinerary = content.strip()
+    elif isinstance(content, list):
+        itinerary = "".join(
+            item if isinstance(item, str)
+            else item.get("text", "")
+            if isinstance(item, dict)
+            and isinstance(item.get("text"), str)
+            else ""
+            for item in content
+        ).strip()
+    else:
+        itinerary = ""
+
+    if not itinerary:
+        raise ValueError("Gemini returned no usable itinerary text.")
+
     requested_days = get_requested_days(state["user_query"])
     generated_days = get_itinerary_days(itinerary)
 

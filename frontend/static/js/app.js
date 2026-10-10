@@ -248,16 +248,16 @@
     });
   }
 
-  var FIELD_BY_NAME = {
-    GROQ_API_KEY: "groq_api_key",
-    DATABASE_URL: "database_url"
-  };
 
-  var NAME_BY_FIELD = {
-    groq_api_key: "GROQ_API_KEY",
-    database_url: "DATABASE_URL"
-  };
+var FIELD_BY_NAME = {
+  GEMINI_API_KEY: "gemini_api_key",
+  DATABASE_URL: "database_url"
+};
 
+var NAME_BY_FIELD = {
+  gemini_api_key: "GEMINI_API_KEY",
+  database_url: "DATABASE_URL"
+};
   function openSettings() {
     settingsModal.hidden = false;
     settingsScrim.hidden = false;
@@ -505,9 +505,11 @@
       server: {
         title: "The planner could not finish",
         detail: "The request reached the server but the agent run failed. Check the server console for details." },
+
       quota: {
         title: "AI usage limit reached",
-        detail: "The AI provider has temporarily limited requests. Wait for the quota to reset, or configure another valid API key in Settings.   " },
+        detail: "The AI provider has temporarily limited requests. Please try again after the quota resets, or check your API plan and usage limits."
+      },
       network: {
         title: "Could not reach the server",
         detail: "The request never completed. Check that the server is still running."

@@ -36,7 +36,23 @@ def flight_agent(state: TravelState):
             HumanMessage(content=prompt),
         ])
 
-        flight_data = response.content
+        content = response.content
+
+        if isinstance(content, str):
+            flight_data = content.strip()
+        elif isinstance(content, list):
+            flight_data = "".join(
+                item if isinstance(item, str)
+                else item.get("text", "")
+                if isinstance(item, dict) and isinstance(item.get("text"), str)
+                else ""
+                for item in content
+            ).strip()
+        else:
+            flight_data = ""
+
+        if not flight_data:
+            flight_data = "Flight information unavailable: Gemini returned no usable text."
 
     except Exception as e:
         flight_data = f"Flight information unavailable: {str(e)}"

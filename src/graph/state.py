@@ -16,7 +16,7 @@ class TravelState(TypedDict):
     budget_analysis: str
     budget_costs: dict[str, float]
     budget_target: float | None
-    llm_calls: int
+    llm_calls: Annotated[int, operator.add]
 
 
 def initial_state(user_query: str) -> TravelState:

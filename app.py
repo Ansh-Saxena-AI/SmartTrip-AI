@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 import traceback
 import uvicorn
@@ -18,7 +18,7 @@ from src.api.sessions import (
     new_session_id,
     store_credentials,
 )
-from src.api.validation import check_database_url, check_groq_api_key
+from src.api.validation import check_database_url, check_gemini_api_key
 from src.clients import cache
 from src.config.session import (
     MissingCredentialsError,
@@ -79,7 +79,7 @@ class ConfigRequest(BaseModel):
     memory for this session only and are never echoed back.
     """
 
-    groq_api_key: str | None = None
+    gemini_api_key: str | None = None
     database_url: str | None = None
 
 
@@ -134,11 +134,11 @@ async def write_config(request: Request, body: ConfigRequest):
 
     errors = {}
 
-    groq_key = (body.groq_api_key or "").strip()
-    if groq_key:
-        ok, detail = check_groq_api_key(groq_key)
+    gemini_key = (body.gemini_api_key or "").strip()
+    if gemini_key:
+        ok, detail = check_gemini_api_key(gemini_key)
         if not ok:
-            errors["groq_api_key"] = detail
+            errors["gemini_api_key"] = detail
 
     database_url = (body.database_url or "").strip()
     if database_url:
@@ -156,7 +156,7 @@ async def write_config(request: Request, body: ConfigRequest):
 
     credentials = store_credentials(
         session_id,
-        groq_api_key=body.groq_api_key,
+        gemini_api_key=body.gemini_api_key,
         database_url=body.database_url,
     )
 
@@ -188,6 +188,8 @@ async def travel_planner(request: Request, request_data: TravelRequest):
     credentials = get_credentials_for(_session_id(request))
 
     try:
+        print("TRAVEL REQUEST RECEIVED", flush=True)
+
         user_message = request_data.message.strip()
 
         if not user_message:
@@ -200,10 +202,14 @@ async def travel_planner(request: Request, request_data: TravelRequest):
             )
 
         with use_credentials(credentials):
+            print("STARTING TRAVEL AGENT", flush=True)
+
             result = run_travel_agent(
                 user_input=user_message,
                 thread_id=request_data.thread_id
             )
+
+        print("TRAVEL AGENT FINISHED", flush=True)
 
         return JSONResponse(
             content={
@@ -219,7 +225,6 @@ async def travel_planner(request: Request, request_data: TravelRequest):
         )
 
     except MissingCredentialsError as e:
-        # The frontend turns this into a prompt to open Settings.
         return JSONResponse(
             status_code=428,
             content={
@@ -229,30 +234,30 @@ async def travel_planner(request: Request, request_data: TravelRequest):
             }
         )
 
-
     except Exception as e:
-        print("ERROR:", e)
+        print("TRIP PLANNER ERROR:", repr(e), flush=True)
         traceback.print_exc()
 
-        error_message = str(e)
-        lower_error = error_message.lower()
+        error_message = str(e).lower()
 
-        if (
-            "rate limit" in lower_error
-            or "tokens per day" in lower_error
-            or "rate_limit_exceeded" in lower_error
-            or "429" in lower_error
-        ):
+
+        if any(term in error_message for term in (
+            "resource_exhausted",
+            "rate_limit_exceeded",
+            "rate limit",
+            "tokens per day",
+            "quota",
+        )):
+
             return JSONResponse(
                 status_code=429,
                 content={
                     "success": False,
                     "kind": "quota",
                     "error": (
-                        "The Groq API usage limit has been reached. "
-                        "Please wait for the limit to reset or configure "
-                        "another valid API key in Settings."
-                    )
+                        "The AI service has reached its current request "
+                        "limit. Please try again later."
+                    ),
                 }
             )
 
@@ -260,11 +265,12 @@ async def travel_planner(request: Request, request_data: TravelRequest):
             status_code=500,
             content={
                 "success": False,
-                "error": "The travel planner encountered an unexpected error."
+                "error": (
+                    "The travel planner encountered an unexpected error. "
+                    "Please try again later."
+                ),
             }
         )
-
-
 
 
 @app.head("/", include_in_schema=False)

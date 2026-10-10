@@ -1,14 +1,9 @@
+
 """
 Per-session credentials.
 
-Keys can come from two places:
-
-* the server's .env  - shared by everyone, set once at deploy time
-* the browser session - typed into the settings panel, held in memory only
-
-Session values take precedence, are never written to disk, and disappear
-when the session expires. Resolution happens through a ContextVar so the
-agents can stay unaware of where a key came from.
+API keys can come from the server's .env file or the browser session.
+Session values take precedence and are held in memory only.
 """
 
 from contextlib import contextmanager
@@ -20,25 +15,27 @@ from src.config import settings
 
 @dataclass(frozen=True)
 class Credentials:
+    gemini_api_key: str | None = None
     groq_api_key: str | None = None
     database_url: str | None = None
 
 
 EMPTY = Credentials()
 
-_current: ContextVar[Credentials] = ContextVar("travelbrain_credentials", default=EMPTY)
+_current: ContextVar[Credentials] = ContextVar(
+    "travelbrain_credentials", default=EMPTY
+)
 
 
 class MissingCredentialsError(RuntimeError):
-    """Raised when a required key is configured in neither .env nor the session."""
+    """Raised when a required key is not configured."""
 
     def __init__(self, missing: list[str]):
         self.missing = missing
-
         super().__init__(
             "Missing credentials: "
             + ", ".join(missing)
-            + ". Add them in Settings, or set them in the server's .env file."
+            + ". Add them in Settings or the server's .env file."
         )
 
 
@@ -48,19 +45,16 @@ def get_credentials() -> Credentials:
 
 @contextmanager
 def use_credentials(credentials: Credentials | None):
-    """Bind session credentials for the duration of one request."""
-
+    """Bind credentials for the duration of one request."""
     token = _current.set(credentials or EMPTY)
-
     try:
         yield
     finally:
         _current.reset(token)
 
 
-# =========================
-# Resolution
-# =========================
+def resolve_gemini_api_key() -> str | None:
+    return get_credentials().gemini_api_key or settings.GEMINI_API_KEY
 
 def resolve_groq_api_key() -> str | None:
     return get_credentials().groq_api_key or settings.GROQ_API_KEY
@@ -68,33 +62,24 @@ def resolve_groq_api_key() -> str | None:
 
 def resolve_database_url() -> str | None:
     url = get_credentials().database_url or settings.DATABASE_URL
-
     return settings.normalize_database_url(url) if url else None
 
 
 def require(*names: str) -> None:
-    """Raise MissingCredentialsError listing whichever of these is absent."""
-
     resolvers = {
+        "GEMINI_API_KEY": resolve_gemini_api_key,
         "GROQ_API_KEY": resolve_groq_api_key,
         "DATABASE_URL": resolve_database_url,
     }
-
     missing = [name for name in names if not resolvers[name]()]
-
     if missing:
         raise MissingCredentialsError(missing)
 
-
-# =========================
-# Status, for the settings UI
-# =========================
-
 CREDENTIAL_LABELS = {
-    "GROQ_API_KEY": {
-        "label": "Groq API key",
-        "hint": "Powers every agent. Create one at console.groq.com/keys.",
-        "placeholder": "gsk_...",
+    "GEMINI_API_KEY": {
+        "label": "Google Gemini API key",
+        "hint": "Powers the travel-planning AI. Get a key from Google AI Studio.",
+        "placeholder": "Paste your Gemini API key",
     },
     "DATABASE_URL": {
         "label": "PostgreSQL URL",
@@ -105,17 +90,12 @@ CREDENTIAL_LABELS = {
 
 
 def credential_status() -> dict:
-    """
-    Describe what is configured and where it came from, without ever
-    returning the secret itself.
-    """
-
     session = get_credentials()
 
     sources = {
-        "GROQ_API_KEY": (
-            "session" if session.groq_api_key
-            else "env" if settings.GROQ_API_KEY
+        "GEMINI_API_KEY": (
+            "session" if session.gemini_api_key
+            else "env" if settings.GEMINI_API_KEY
             else None
         ),
         "DATABASE_URL": (

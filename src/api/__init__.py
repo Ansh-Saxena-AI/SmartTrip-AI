@@ -1,4 +1,5 @@
-from src.api.validation import check_database_url, check_groq_api_key
+
+from src.api.validation import check_database_url, check_gemini_api_key
 from src.api.sessions import (
     SESSION_COOKIE,
     clear_credentials,
@@ -10,7 +11,7 @@ from src.api.sessions import (
 __all__ = [
     "SESSION_COOKIE",
     "check_database_url",
-    "check_groq_api_key",
+    "check_gemini_api_key",
     "clear_credentials",
     "get_credentials_for",
     "new_session_id",
