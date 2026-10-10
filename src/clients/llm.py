@@ -71,7 +71,7 @@ def get_llm():
         except Exception as error:
             if not _is_quota_error(error):
                 raise
-            print("Gemini quota reached; switching to Groq.")
+            print("Gemini quota reached; switching to Groq.", flush=True)
             return fallback.invoke(input, config=config, **kwargs)
 
     return RunnableLambda(invoke_with_fallback)
